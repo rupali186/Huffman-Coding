@@ -1,0 +1,108 @@
+#include <cstring>
+#include <iostream>
+#include <queue>
+#include<unordered_map>
+using namespace std;
+class Node
+{
+    public:
+    Node *left;
+    Node *right;
+    char data;
+    int freq;
+    Node(int data,int freq)
+    {
+       left=NULL;
+       right=NULL;
+       this->data=data;
+       this->freq=freq;
+    }
+};
+class greater1
+{
+    public:
+    bool operator()(Node*l,Node* r)
+    {
+        return (l->freq>r->freq);
+    }
+};
+void storeCountInArray(string s,int arr[]){//stores frequency of each character in an array
+    for(int i=0;i<s.size();i++){
+        arr[s[i]]++;
+    }
+}
+void storeCodes(Node *root,unordered_map<char,string> *ourmap,string s){
+    if(root==NULL)
+        return;
+    if(root!=NULL&&root->left==NULL&&root->right==NULL) //calculate root to leaf path for each node and store code in a map corresponding to each character
+    {
+        (*ourmap)[root->data]=s;
+        return;
+    }
+    storeCodes(root->left,ourmap,s+"0");  //the code for left is taken as 0 and right is 1
+    storeCodes(root->right,ourmap,s+"1");
+
+}
+void storeRevCodes(Node *root,unordered_map<string,char> *ourmap,string s){
+    if(root==NULL)
+        return;
+    if(root!=NULL&&root->left==NULL&&root->right==NULL)//stores char corresponding to a given code for decompression
+    {
+        (*ourmap)[s]=root->data;
+        return;
+    }
+    storeRevCodes(root->left,ourmap,s+"0");
+    storeRevCodes(root->right,ourmap,s+"1");
+}
+int main()
+{
+    string s;
+    cin>>s;
+    cout<<"the string entered is:"<<endl;
+    cout<<s<<endl;
+    int arr[256]={0};//to store the count of each character in an array
+    storeCountInArray(s,arr);
+    priority_queue<Node*,vector<Node*>,greater1> p;//min priority queue
+    for(int i=0;i<256;i++)
+    {
+        if(arr[i]!=0)
+        {
+            Node *x=new Node(i,arr[i]);   //inserts element in the min priority queue
+            p.push(x);
+        }
+
+    }
+
+    while(p.size()>1)
+    {
+        Node *a=p.top();
+        p.pop();
+        Node *b=p.top();      //picks two min count nodes and clubs their frequency to make a new node.
+        p.pop();              //remove the two min count nodes and insert the new node crested from them in priority queue.
+        Node *x=new Node('\0',a->freq+b->freq);
+        x->left=a;
+        x->right=b;
+        p.push(x);
+    }
+
+    Node *root=p.top();//the last node of the priority queue will be the root of the inverted tree type structure
+    unordered_map<char,string> *ourmap=new unordered_map<char,string>;//to store codes corresponding to each character in a map
+    storeCodes(root,ourmap,"");
+    unordered_map<char,string>::iterator it=ourmap->begin();
+    cout<<"codes corresponding to each character of the string:"<<endl;
+    while(it!=ourmap->end())
+    {
+        cout<<it->first<<" "<<it->second<<endl;
+        it++;
+    }
+    unordered_map<string,char> *rev_ourmap=new unordered_map<string,char>;
+    storeRevCodes(root,rev_ourmap,"");
+    cout<<"character corresponding to each code of the string for decompression:"<<endl;
+    unordered_map<string,char>::iterator it1=rev_ourmap->begin();
+    while(it1!=rev_ourmap->end())
+    {
+        cout<<it1->first<<" "<<it1->second<<endl;
+        it1++;
+    }
+
+}
